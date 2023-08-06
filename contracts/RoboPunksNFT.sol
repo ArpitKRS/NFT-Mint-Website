@@ -35,10 +35,14 @@ contract RoboPunksNFT is ERC721, Ownable {
     function tokenURI(
         uint256 tokenId_
     ) public view override returns (string memory) {
-        require(_exists(tokenId), "Token does not exist");
+        require(_exists(tokenId_), "Token does not exist");
         return
             string(
-                abi.encodePacked(baseTokenUri, tokenId_.toString(), ".json")
+                abi.encodePacked(
+                    baseTokenUri,
+                    Strings.toString(tokenId_),
+                    ".json"
+                )
             );
     }
 
@@ -47,5 +51,21 @@ contract RoboPunksNFT is ERC721, Ownable {
             ""
         );
         require(success, "Withdraw failed");
+    }
+
+    function mint(uint256 quantity_) public payable {
+        require(isPublicMintEnabled, "Minting not enabled");
+        require(msg.value == quantity_ * mintPrice, "Wrong mint value");
+        require(totalSupply + quantity_ <= maxSupply, "Sold Out!");
+        require(
+            walletMints[msg.sender] + quantity_ <= maxPerWallet,
+            "Exceed max wallet mints"
+        );
+
+        for (uint256 i = 0; i < quantity_; i++) {
+            uint256 newTokenId = totalSupply + 1;
+            totalSupply++;
+            _safeMint(msg.sender, newTokenId);
+        }
     }
 }
